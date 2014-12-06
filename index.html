@@ -4,24 +4,49 @@
 <script src="lib/phaser.js"></script>
 <script src="build/development/main.js"></script>
 <style>
+@font-face {
+	font-family: PixelDart;
+	src: url("font/PixelDart.ttf");
+}
+a {
+    text-decoration:none;
+    color: inherit;
+}
+a:visited {
+    color: inherit;
+}
+a:hover {
+    color: white;
+}
 body {
     margin: 0;
     padding: 0;
     background: black;
+    font-family: "PixelDart", sans;
+}
+h1 {
+    color: #1b4aab;
+    font-size: 60px;
+    text-align: center;
+    margin-bottom: -5px;
+    margin-top: 10px;
+    font-weight: normal;
+}
+footer {
+    color: #80b1ff;
+    text-align: center;
+    font-size: 40px;
 }
 #game {
     width: 800px;
     height: 640px;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    background: #80b1ff;
     margin: auto;
-    background: white;
 }
 </style>
 </head>
 <body>
+<h1><a href="http://joeba.in/matriline">Matriline</a></h1>
 <div id="game"></div>
+<footer>by <a href="http://joeba.in">Joe Bain</a> for <a href="http://ludumdare.com">Ludum Dare</a></footer>
 </body>

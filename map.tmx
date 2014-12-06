@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" width="25" height="20" tilewidth="32" tileheight="32">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="25" height="20" tilewidth="32" tileheight="32" nextobjectid="10">
  <tileset firstgid="1" name="tiles" tilewidth="32" tileheight="32">
   <image source="img/tilemap.png" width="128" height="64"/>
+ </tileset>
+ <tileset firstgid="9" name="tree" tilewidth="32" tileheight="64">
+  <image source="img/tree.png" width="128" height="64"/>
+ </tileset>
+ <tileset firstgid="13" name="player" tilewidth="32" tileheight="32">
+  <image source="img/player.png" width="320" height="32"/>
  </tileset>
  <layer name="ground" width="25" height="20">
   <data encoding="base64" compression="zlib">
    eJxjYBgF2AAjATzQ7hkF5IHBEJcDAUaqv4ciILXMGSxl1CjADwjVKYQwGxEYAKMQAGk=
   </data>
  </layer>
+ <objectgroup name="trees">
+  <object id="7" gid="12" x="64" y="608"/>
+  <object id="8" gid="12" x="480" y="224"/>
+ </objectgroup>
+ <objectgroup name="player">
+  <object id="9" gid="13" x="256" y="608"/>
+ </objectgroup>
 </map>

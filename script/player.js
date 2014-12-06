@@ -1,7 +1,7 @@
 var world = require("./world");
 
-var Player = function() {
-    this.sprite = new Phaser.Sprite(world.game, 32, 320, 'player');
+var Player = function(x, y) {
+    this.sprite = new Phaser.Sprite(world.game, x, y, 'player');
 
     this.runSpeed = 120; // pixels per second
     this.pxPerFrame = 4;
@@ -28,8 +28,35 @@ var Player = function() {
 
     this.cursors = world.game.input.keyboard.createCursorKeys();
     this.jumpTimer = 0;
+    this.fruitEatTimer = 0;
+
+    // status variables
+    this.jumpStrength = 1; // up to 3
+    this.carryStrength = 1; // up to 3
+    this.foodStrength = 1; // up to 3
+
+    this.ageRate = 15 / (60*2); // 2 minutes is 15 years
+    this.feedRate = 60; // got to eat once a minute
+    this.pregnancyRate = 1 / 10; // 10 seconds is one month (1.5 mins for full pregnancy)
+
+    this.reset();
+
+    // hud
+    this.hud = world.game.add.group();
+    this.ageText = new Phaser.Text(world.game, 10, 10, "", {font: "60px PixelDart", fill: "#ffffff"});
+    this.hud.add(this.ageText);
+    this.hungerBar = world.game.add.graphics(10, 60);
+    this.hungerBarWidth = 200;
 };
 _.extend(Player.prototype, {
+    reset: function() {
+        this.health = 1;
+        this.foodClock = this.feedRate;
+        this.pregnancyMonths = 0;
+        this.age = 0;
+        this.pregnant = 0;
+    },
+
     update: function() {
         world.game.physics.arcade.collide(this.sprite, world.layers.tiles);
 
@@ -52,7 +79,21 @@ _.extend(Player.prototype, {
                 this.sprite.animations.stop('run', true);
             }
         
-            if (this.cursors.up.isDown && this.sprite.body.onFloor() && world.game.time.now > this.jumpTimer)
+            // check if we are under a tree
+            var underTree = undefined;
+            for (var t = 0 ; t < world.trees.length ; t++) {
+                if (this.sprite.overlap(world.trees[t].sprite)) {
+                    underTree = world.trees[t];
+                    break;
+                }
+            }
+            if (this.cursors.up.isDown && underTree && underTree.fruit > 0 && world.game.time.now > this.fruitEatTimer) {
+                underTree.fruit--;
+                this.foodClock = this.feedRate;
+                this.fruitEatTimer = world.game.time.now + 1000;
+                this.jumpTimer = world.game.time.now + 1000;
+            }
+            else if (this.cursors.up.isDown && this.sprite.body.onFloor() && world.game.time.now > this.jumpTimer)
             {
                 this.sprite.body.velocity.y = -500;
                 this.jumpTimer = world.game.time.now + 1000;
@@ -80,6 +121,31 @@ _.extend(Player.prototype, {
             if (!this.cursors.down.isDown) {
                 this.sprite.animations.play("stand-up");
                 setTimeout((function() { this.crouching = false; }).bind(this), this.crouchDuration);
+            }
+        }
+
+        // update the stats and timers
+        this.age += world.game.time.physicsElapsed * this.ageRate;
+        this.foodClock -= world.game.time.physicsElapsed;
+        if (this.pregnant) {
+            this.pregnancyMonths += world.game.time.physicsElapsed * this.pregnancyRate;
+        }
+
+        // update the hud
+        var age = Math.ceil(this.age);
+        this.ageText.text = age + " year" + (age>1?"s":"") + " old";
+
+        var hungerPercent = Math.ceil(this.hungerBarWidth*(this.foodClock/this.feedRate));
+        if (hungerPercent < 0) hungerPercent = 0;
+        if (hungerPercent !== this.hungerPercent) {
+            this.hungerPercent = hungerPercent;
+            this.hungerBar.clear();
+            if (this.foodClock > 10 || (world.game.time.totalElapsedSeconds() % 0.5) < 0.4) {
+                this.hungerBar.lineStyle(2, 0xffffff, 1);
+                this.hungerBar.drawRect(0, 0, this.hungerBarWidth, 20);
+                this.hungerBar.beginFill(0xffffff);
+                this.hungerBar.drawRect(0, 0, this.hungerPercent, 20);
+                this.hungerBar.endFill();
             }
         }
     }
