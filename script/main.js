@@ -1,6 +1,7 @@
 var Preloader = require("./preloader");
 var world = require("./world");
 
+var Player = require("./player");
 
 
 var cursors, jumpButton, jumpTimer = 0;
@@ -18,36 +19,13 @@ var create = function() {
 
     world.map.setCollisionBetween(1, 12);
 
-    world.player = world.game.add.sprite(32, 320, 'player');
-    world.game.physics.enable(world.player, Phaser.Physics.ARCADE);
-    world.player.body.collideWorldBounds = true;
-    world.player.body.gravity.y = 1000;
-    world.player.body.maxVelocity.y = 500;
-    world.player.body.setSize(16, 32);
+    world.player = new Player();
+    world.game.world.add(world.player.sprite);
 
-    cursors = world.game.input.keyboard.createCursorKeys();
-    jumpButton = world.game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 };
 
 var update = function() {
-    world.game.physics.arcade.collide(world.player, world.layers.tiles);
-    
-    world.player.body.velocity.x = 0;
-
-    if (cursors.left.isDown)
-    {
-        world.player.body.velocity.x = -150;
-    }
-    else if (cursors.right.isDown)
-    {
-        world.player.body.velocity.x = 150;
-    }
-    
-    if (jumpButton.isDown && world.player.body.onFloor() && world.game.time.now > jumpTimer)
-    {
-        world.player.body.velocity.y = -500;
-        jumpTimer = world.game.time.now + 750;
-    }
+    world.player.update();
 };
 
 var render = function() {
