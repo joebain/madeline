@@ -44,10 +44,13 @@ var Player = function(x, y) {
 
     // hud
     this.hud = world.game.add.group();
-    this.ageText = new Phaser.Text(world.game, 10, 10, "", {font: "60px PixelDart", fill: "#ffffff"});
+    this.heartBar = new Phaser.TileSprite(world.game, 10, 10, 16, 16, "heart");
+    this.hud.add(this.heartBar);
+    this.ageText = new Phaser.Text(world.game, 10, 30, "", {font: "40px PixelDart", fill: "#ffffff"});
     this.hud.add(this.ageText);
-    this.hungerBar = world.game.add.graphics(10, 60);
-    this.hungerBarWidth = 200;
+    this.hungerBar = world.game.add.graphics(10, 65);
+    this.hungerBarWidth = 140;
+    this.hungerBarHeight = 15;
 };
 _.extend(Player.prototype, {
     reset: function() {
@@ -161,6 +164,8 @@ _.extend(Player.prototype, {
         }
 
         // update the hud
+        this.heartBar.width = this.health * 16;
+
         var age = Math.ceil(this.age);
         this.ageText.text = age + " year" + (age>1?"s":"") + " old";
 
@@ -171,9 +176,9 @@ _.extend(Player.prototype, {
             this.hungerBar.clear();
             if (this.foodClock > 10 || (world.game.time.totalElapsedSeconds() % 0.5) < 0.4) {
                 this.hungerBar.lineStyle(2, 0xffffff, 1);
-                this.hungerBar.drawRect(0, 0, this.hungerBarWidth, 20);
+                this.hungerBar.drawRect(0, 0, this.hungerBarWidth, this.hungerBarHeight);
                 this.hungerBar.beginFill(0xffffff);
-                this.hungerBar.drawRect(0, 0, this.hungerPercent, 20);
+                this.hungerBar.drawRect(0, 0, this.hungerPercent, this.hungerBarHeight);
                 this.hungerBar.endFill();
             }
         }
