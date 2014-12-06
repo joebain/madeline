@@ -13,9 +13,11 @@ var Player = function(x, y) {
 
     this.landingDuration = 100;
     this.crouchDuration = 200;
+    this.sexDuration = 5000;
     this.sprite.animations.add('land', [8,9,8,0], 8, false);
     this.sprite.animations.add('crouch-down', [8,9], 4, false);
     this.sprite.animations.add('stand-up', [8,0], 4, false);
+    this.sprite.animations.add('sex', [10,11,12,11], 8, true);
 
     world.game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
 
@@ -27,15 +29,14 @@ var Player = function(x, y) {
     this.sprite.anchor.setTo(.5, 1); //so it flips around its middle
 
     this.cursors = world.game.input.keyboard.createCursorKeys();
-    this.jumpTimer = 0;
-    this.fruitEatTimer = 0;
+    this.upKeyTimer = 0;
 
     // status variables
     this.jumpStrength = 1; // up to 3
     this.carryStrength = 1; // up to 3
     this.foodStrength = 1; // up to 3
 
-    this.ageRate = 15 / (60*2); // 2 minutes is 15 years
+    this.ageRate = 15 / (30); // 30 secs is 15 years
     this.feedRate = 60; // got to eat once a minute
     this.pregnancyRate = 1 / 10; // 10 seconds is one month (1.5 mins for full pregnancy)
 
@@ -54,7 +55,7 @@ _.extend(Player.prototype, {
         this.foodClock = this.feedRate;
         this.pregnancyMonths = 0;
         this.age = 0;
-        this.pregnant = 0;
+        this.pregnant = false;
     },
 
     update: function() {
@@ -62,7 +63,8 @@ _.extend(Player.prototype, {
 
         this.sprite.body.velocity.x = 0;
 
-        if (!this.crouching) {
+        if (this.havingSex) {
+        } else if (!this.crouching) {
             if (this.cursors.left.isDown)
             {
                 this.sprite.body.velocity.x = -this.runSpeed;
@@ -78,29 +80,56 @@ _.extend(Player.prototype, {
             else {
                 this.sprite.animations.stop('run', true);
             }
-        
-            // check if we are under a tree
-            var underTree = undefined;
-            for (var t = 0 ; t < world.trees.length ; t++) {
-                if (this.sprite.overlap(world.trees[t].sprite)) {
-                    underTree = world.trees[t];
-                    break;
+            if (this.cursors.up.isDown && world.game.time.now > this.upKeyTimer) {
+                // check if we are under a tree
+                var underTree = undefined;
+                for (var t = 0 ; t < world.trees.length ; t++) {
+                    if (this.sprite.overlap(world.trees[t].sprite)) {
+                        underTree = world.trees[t];
+                        break;
+                    }
+                }
+                if (underTree && underTree.fruit > 0) {
+                    underTree.fruit--;
+                    this.foodClock = this.feedRate;
+                    this.upKeyTimer = world.game.time.now + 1000;
+                }
+                // or else we can jump
+                else if (this.sprite.body.onFloor()) {
+                    this.sprite.body.velocity.y = -500;
+                    this.upKeyTimer = world.game.time.now + 1000;
                 }
             }
-            if (this.cursors.up.isDown && underTree && underTree.fruit > 0 && world.game.time.now > this.fruitEatTimer) {
-                underTree.fruit--;
-                this.foodClock = this.feedRate;
-                this.fruitEatTimer = world.game.time.now + 1000;
-                this.jumpTimer = world.game.time.now + 1000;
-            }
-            else if (this.cursors.up.isDown && this.sprite.body.onFloor() && world.game.time.now > this.jumpTimer)
-            {
-                this.sprite.body.velocity.y = -500;
-                this.jumpTimer = world.game.time.now + 1000;
-            }
             else if (this.cursors.down.isDown && this.sprite.body.onFloor()) {
-                this.crouching = true;
-                this.sprite.animations.play("crouch-down");
+                
+                // check if we are with a man
+                var withMan = undefined;
+                for (var m = 0 ; m < world.men.length ; m++) {
+                    if (this.sprite.overlap(world.men[m].sprite)) {
+                        withMan = world.men[m];
+                        break;
+                    }
+                }
+                if (withMan) {
+                    if (this.pregnant) {
+                        // some text about how you can't have sex
+                    } else if (this.age < 16) {
+                        // some text about how you can't have sex
+                    } else {
+                        this.havingSex = true;
+                        withMan.havingSex = true;
+                        this.sprite.animations.play("sex");
+                        setTimeout((function() {
+                            this.havingSex = false;
+                            withMan.havingSex = false;
+                            this.pregnant = true;
+                            this.babyType = withMan.type;
+                        }).bind(this), this.sexDuration);
+                    }
+                } else {
+                    this.crouching = true;
+                    this.sprite.animations.play("crouch-down");
+                }
             }
 
             if (!this.sprite.body.onFloor()) {

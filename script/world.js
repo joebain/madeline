@@ -6,7 +6,8 @@ var World = {
     },
     player: null,
     game: null,
-    trees: []
+    trees: [],
+    men: []
 };
 
 World.reset = function() {
@@ -16,6 +17,7 @@ World.reset = function() {
     World.player = null;
     World.game = null;
     World.trees = [];
+    World.men = [];
 };
 
 module.exports = World;

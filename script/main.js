@@ -3,7 +3,7 @@ var world = require("./world");
 
 var Player = require("./player");
 var Tree = require("./tree");
-
+var Man = require("./man");
 
 var cursors, jumpButton, jumpTimer = 0;
 
@@ -36,6 +36,10 @@ var create = function() {
     world.player = new Player(world.map.objects.player[0].x, world.map.objects.player[0].y);
     world.game.world.add(world.player.sprite);
 
+    // man
+    this.manInterval = 10000;
+    this.manTimer = world.game.time.now;// + this.manInterval;
+
 
 };
 
@@ -43,6 +47,26 @@ var update = function() {
     world.player.update();
     for (var t = 0 ; t < world.trees.length ; t++) {
         world.trees[t].update();
+    }
+    for (var m = 0 ; m < world.men.length ; m++) {
+        world.men[m].update();
+        if (world.men[m].dead) {
+            world.men.splice(m, 1);
+            m--
+        }
+    }
+    if (this.manTimer < world.game.time.now && world.men.length === 0) {
+        this.manTimer = world.game.time.now + this.manInterval;
+        var manTypes = ["jump", "strength", "heart"];
+        manTypes = _.without(manTypes, world.manType);
+        world.manType = manTypes[Math.floor(Math.random()*manTypes.length)];
+        var man = new Man(world.manType);
+        world.game.world.add(man.sprite);
+        world.men.push(man);
+        var manPoints = _.without(world.map.objects.manPoints, world.manPoint);
+        world.manPoint = manPoints[Math.floor(manPoints.length * Math.random())];
+        world.manPoint = world.map.objects.manPoints[0];
+        man.sendTo(world.manPoint.x, world.manPoint.y);
     }
 };
 

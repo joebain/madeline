@@ -9,6 +9,7 @@ var Preloader = {
         world.game.load.image('heart', 'img/heart.png');
         world.game.load.spritesheet('tree', 'img/tree.png', 32, 64);
         world.game.load.image('fruit', 'img/fruit.png');
+        world.game.load.spritesheet('man', 'img/man.png', 32, 48);
     }
 };
 
