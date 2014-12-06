@@ -4,6 +4,7 @@ var world = require("./world");
 var Player = require("./player");
 var Tree = require("./tree");
 var Man = require("./man");
+var OldWoman = require("./old-woman");
 
 var cursors, jumpButton, jumpTimer = 0;
 
@@ -34,7 +35,7 @@ var create = function() {
 
     // player
     world.player = new Player(world.map.objects.player[0].x, world.map.objects.player[0].y);
-    world.game.world.add(world.player.sprite);
+    world.game.world.add(world.player.getGameObject());
 
     // man
     this.manInterval = 10000;
@@ -55,6 +56,18 @@ var update = function() {
             m--
         }
     }
+    for (var d = 0 ; d < world.dependants.length ; d++) {
+        world.dependants[d].update();
+        if (world.dependants[d].dead) {
+            var dependant = world.dependants[d];
+            world.map.putTile(3, Math.floor(dependant.sprite.x/32), Math.floor(dependant.sprite.y/32), "ground");
+            world.dependants.splice(d, 1);
+            d--
+        }
+    }
+
+
+    // bring men on the scene
     if (this.manTimer < world.game.time.now && world.men.length === 0) {
         this.manTimer = world.game.time.now + this.manInterval;
         var manTypes = ["jump", "strength", "heart"];
@@ -67,6 +80,14 @@ var update = function() {
         world.manPoint = manPoints[Math.floor(manPoints.length * Math.random())];
         world.manPoint = world.map.objects.manPoints[0];
         man.sendTo(world.manPoint.x, world.manPoint.y);
+    }
+
+    // deliver the baby
+    if (world.player.pregnant && world.player.pregnancyMonths > 9) {
+        var oldWoman = new OldWoman(world.player);
+        world.game.world.add(oldWoman.sprite);
+        world.dependants.push(oldWoman);
+        world.player.rejuvinate(world.player.babyType);
     }
 };
 

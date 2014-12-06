@@ -7,7 +7,13 @@ var World = {
     player: null,
     game: null,
     trees: [],
-    men: []
+    men: [],
+    dependants: [],
+    rates: {
+        ageRate: 15 / (30), // 30 secs is 15 years
+        feedRate: 60, // got to eat once a minute
+        pregnancyRate: 1 / 4 // 7 seconds is one month (63 secs for full pregnancy)
+    }
 };
 
 World.reset = function() {
@@ -18,6 +24,7 @@ World.reset = function() {
     World.game = null;
     World.trees = [];
     World.men = [];
+    World.dependants = [];
 };
 
 module.exports = World;

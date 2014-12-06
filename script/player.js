@@ -19,43 +19,69 @@ var Player = function(x, y) {
     this.sprite.animations.add('stand-up', [8,0], 4, false);
     this.sprite.animations.add('sex', [10,11,12,11], 8, true);
 
+    this.bellySprite = new Phaser.Sprite(world.game, -16, -32, 'belly');
+    this.bellySprite.frame = 0;
+    
+    this.sprite.addChild(this.bellySprite);
+    this.sprite.anchor.setTo(.5, 1); //so it flips around its middle
+
     world.game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
 
     this.sprite.body.collideWorldBounds = true;
     this.sprite.body.gravity.y = 1000;
-    this.sprite.body.maxVelocity.y = 500;
+    this.sprite.body.maxVelocity.y = 1500;
     this.sprite.body.setSize(8, 32);
 
-    this.sprite.anchor.setTo(.5, 1); //so it flips around its middle
 
     this.cursors = world.game.input.keyboard.createCursorKeys();
     this.upKeyTimer = 0;
 
+    // speeds &c
+    this.jumpSpeed = 300;
+    this.jumpSpeedIncrements = 120;
+
     // status variables
     this.jumpStrength = 1; // up to 3
     this.carryStrength = 1; // up to 3
-    this.foodStrength = 1; // up to 3
+    this.heartStrength = 1; // up to 3
 
-    this.ageRate = 15 / (30); // 30 secs is 15 years
-    this.feedRate = 60; // got to eat once a minute
-    this.pregnancyRate = 1 / 10; // 10 seconds is one month (1.5 mins for full pregnancy)
-
-    this.reset();
+    this.rejuvinate();
 
     // hud
     this.hud = world.game.add.group();
-    this.heartBar = new Phaser.TileSprite(world.game, 10, 10, 16, 16, "heart");
+    this.heartBar = new Phaser.TileSprite(world.game, 10, 10, 0, 16, "heart");
     this.hud.add(this.heartBar);
     this.ageText = new Phaser.Text(world.game, 10, 30, "", {font: "40px PixelDart", fill: "#ffffff"});
     this.hud.add(this.ageText);
     this.hungerBar = world.game.add.graphics(10, 65);
     this.hungerBarWidth = 140;
     this.hungerBarHeight = 15;
+
+
+    // testing
 };
 _.extend(Player.prototype, {
-    reset: function() {
-        this.health = 1;
-        this.foodClock = this.feedRate;
+    getGameObject: function() {
+        return this.sprite;
+    },
+
+    rejuvinate: function(type) {
+        if (type === "strength") {
+            if (this.carryStrength < 3) {
+                this.carryStrength++;
+            }
+        } else if (type === "jump") {
+            if (this.jumpStrength < 3) {
+                this.jumpStrength++;
+            }
+        } else if (type === "heart") {
+            if (this.heartStrength < 3) {
+                this.heartStrength++;
+            }
+        }
+
+        this.health = this.heartStrength;
+        this.foodClock = world.rates.feedRate;
         this.pregnancyMonths = 0;
         this.age = 0;
         this.pregnant = false;
@@ -65,6 +91,9 @@ _.extend(Player.prototype, {
         world.game.physics.arcade.collide(this.sprite, world.layers.tiles);
 
         this.sprite.body.velocity.x = 0;
+
+        var howPregnant = Math.ceil(Math.min(this.pregnancyMonths, 9)/3);
+        this.bellySprite.frame = howPregnant;
 
         if (this.havingSex) {
         } else if (!this.crouching) {
@@ -94,12 +123,12 @@ _.extend(Player.prototype, {
                 }
                 if (underTree && underTree.fruit > 0) {
                     underTree.fruit--;
-                    this.foodClock = this.feedRate;
+                    this.foodClock = world.rates.feedRate;
                     this.upKeyTimer = world.game.time.now + 1000;
                 }
                 // or else we can jump
                 else if (this.sprite.body.onFloor()) {
-                    this.sprite.body.velocity.y = -500;
+                    this.sprite.body.velocity.y = -(this.jumpSpeed+this.jumpStrength*this.jumpSpeedIncrements) * (1-howPregnant/4);
                     this.upKeyTimer = world.game.time.now + 1000;
                 }
             }
@@ -157,19 +186,19 @@ _.extend(Player.prototype, {
         }
 
         // update the stats and timers
-        this.age += world.game.time.physicsElapsed * this.ageRate;
+        this.age += world.game.time.physicsElapsed * world.rates.ageRate;
         this.foodClock -= world.game.time.physicsElapsed;
         if (this.pregnant) {
-            this.pregnancyMonths += world.game.time.physicsElapsed * this.pregnancyRate;
+            this.pregnancyMonths += world.game.time.physicsElapsed * world.rates.pregnancyRate;
         }
 
         // update the hud
-        this.heartBar.width = this.health * 16;
+        this.heartBar.width = this.health * 24;
 
         var age = Math.ceil(this.age);
         this.ageText.text = age + " year" + (age>1?"s":"") + " old";
 
-        var hungerPercent = Math.ceil(this.hungerBarWidth*(this.foodClock/this.feedRate));
+        var hungerPercent = Math.ceil(this.hungerBarWidth*(this.foodClock/world.rates.feedRate));
         if (hungerPercent < 0) hungerPercent = 0;
         if (hungerPercent !== this.hungerPercent) {
             this.hungerPercent = hungerPercent;
