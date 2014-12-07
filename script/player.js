@@ -55,7 +55,7 @@ var Player = function(x, y) {
     this.hud = world.game.add.group();
     this.heartBar = new Phaser.TileSprite(world.game, 10, 10, 0, 16, "heart");
     this.hud.add(this.heartBar);
-    this.ageText = new Phaser.Text(world.game, 10, 30, "", {font: "40px PixelDart", fill: "#ffffff"});
+    this.ageText = new Phaser.Text(world.game, 10, 30, "", {font: world.fonts.hud, fill: "#ffffff"});
     this.hud.add(this.ageText);
     this.hungerBar = world.game.add.graphics(10, 65);
     this.hungerBarMaxWidth = 140;

@@ -5,7 +5,7 @@ var GameOver = function(game) {
 
 _.extend(GameOver.prototype, {
     create: function() {
-        var text = world.game.add.text(world.game.width * 0.5, world.game.height * 0.2, "Game Over", {fill: "#ffffff", font: "100px PixelDart"});
+        var text = world.game.add.text(world.game.width * 0.5, world.game.height * 0.15, "Game Over", {fill: "#ffffff", font: world.fonts.title});
         text.anchor.setTo(0.5, 0.5);
 
         var button = world.game.add.button(world.game.width * 0.5, world.game.height * 0.5, "retry-button", function() {

@@ -14,6 +14,11 @@ var World = {
         ageRate: 15 / (30), // 30 secs is 15 years
         feedRate: 20, // got to eat once a minute
         pregnancyRate: 1 / 4 // 7 seconds is one month (63 secs for full pregnancy)
+    },
+    fonts: {
+        body: "42px monaco",
+        title: "120px PixelDart",
+        hud: "42px monaco",
     }
 };
 
