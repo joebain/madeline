@@ -1,0 +1,46 @@
+Title
+=====
+
+You're all alone. Shipwrecked (or something) in this tiny little screen.
+
+If you want to survive you will need to get busy.
+
+Watch out for the local wildlife, and see if you can get any favours from the native inhabitants.
+
+Eat, shit, and have babies.
+
+In game
+=======
+
+start:
+
+    [point at hunger meter]
+    You need to watch your hunger levels. Too low and you will lose a life.
+    [point at hearts]
+    These are your lives.
+    [point at arms]
+    And this shows your strength.
+    [point at age]
+    Time waits for no man.
+    [pause]
+    Or woman.
+
+now allow control.
+
+
+Positional
+==========
+
+over tree:
+    z - eat
+then, 5 secs later:
+    down + z - shit
+over shit:
+    needs water
+over shit (if you have water):
+    z - water
+by water:
+    down + z - get water
+on man:
+    x - sex
+

@@ -36,11 +36,9 @@ _.extend(TreeMind.prototype, {
                 var leftDownTile = world.map.getTile(tPos.x-1, tPos.y+1); 
                 // at a platform edge
                 if (this.mind === "right" && (!rightDownTile || rightDownTile.index !== world.tiles.ground)) {
-                    console.log("prefer to stand than go right");
                     this.mind = "stand";
                 } else if (this.mind === "left" && (!leftDownTile || leftDownTile.index !== world.tiles.ground)) {
                     this.mind = "stand";
-                    console.log("prefer to stand than go left");
                 }
                 // at the screen edge
                 else if (this.body.sprite.x < 32) {

@@ -11,13 +11,20 @@ _.extend(Menu.prototype, {
         text.anchor.setTo(0.5, 0.5);
 
         var text = world.game.add.text(world.game.width * 0.5, world.game.height * 0.3, "", {fill: "#ffffff", font: world.fonts.body});
-        text.text = "Welcome to the world.\n\nYou must eat, shit and give birth, if you want to survive.\n\nPress 'z' to eat fruit off trees or take a shit.\n\nPress 'x' to have sex or give birth (when the baby is ready).\n\nPress 'z' to play, or click the button.";
+        text.text = [
+            "You're all alone. Shipwrecked (or something) in this tiny little screen.",
+            "If you want to survive you will need to work.",
+            "Watch out for the local wildlife, and see if you can get any favours from the native inhabitants.",
+            "",
+            "Eat, shit, and have babies"
+        ].join("\n\n");
         text.align = "center";
         text.wordWrap = true;
         text.wordWrapWidth = world.game.width - 100;
         text.anchor.setTo(0.5, 0);
+        text.setShadow(0, 2, "#444444", 1);
 
-        this.button = world.game.add.button(world.game.width * 0.5, world.game.height * 0.8, "play-button", function() {
+        this.button = world.game.add.button(world.game.width * 0.5, world.game.height * 0.85, "play-button", function() {
             world.game.state.start("game");
         });
         this.button.setFrames(1,0);

@@ -1,6 +1,9 @@
 var world = require("./world");
 var Util = require("./util");
 
+var Settings = require("./settings");
+var Hints = require("./hints");
+
 var Stomach = require("./stomach");
 var Tree = require("./tree");
 
@@ -79,18 +82,43 @@ var Player = function(x, y) {
     this.strengthBar = new Phaser.TileSprite(world.game, 80, 40, 0, 16, "arm");
     this.hud.add(this.strengthBar);
     this.hungerBar = world.game.add.graphics(10, 65);
-    this.hungerBarMaxWidth = 140;
     this.hungerBarHeight = 15;
+    this.hungerBarMaxWidth = 140;
     this.generationsText = new Phaser.Text(world.game, 0, 10, "", {font: world.fonts.hud, fill: "#ffffff"});
     this.hud.add(this.generationsText);
+
+    if (!Settings.getBool("tutorial:hud")) {
+        Settings.setBool("tutorial:hud", true);
+        this.tutorialShowing = true;
+        Hints.caption("Welcome to the island.", 1000).then((function() {
+        Hints.caption("Let me help you.", 1000).then((function() {
+        Hints.objectCaption(this.hungerBar, "You need to watch your hunger level.\nToo low and you will lose a life", 1000, null, "horizontal", {offsetX: this.hungerBarMaxWidth}).then((function() {
+        Hints.objectCaption(this.heartBar, "These are your lives (you only have 1 now)", 1000, null, "horizontal").then((function() {
+        Hints.objectCaption(this.strengthBar, "And this shows your strength", 1000, null, "horizontal").then((function() {
+        Hints.objectCaption(this.ageText, "Time waits for no man", 1000, null, "horizontal").then((function() {
+        Hints.objectCaption(this.ageText, "... or woman.", 1000, null, "horizontal").then((function() {
+        Hints.caption("Good luck", 1000);
+
+        this.tutorialShowing = false;
+
+        }).bind(this));
+        }).bind(this));
+        }).bind(this));
+        }).bind(this));
+        }).bind(this));
+        }).bind(this));
+        }).bind(this));
+    }
+
+    // tutorial
 
 
     // testing
 //    this.pregnant = true;
 //    this.pregnancyMonths = 8;
 //    this.carrying = "water";
-//    this.stomach.age = 17;
-    this.carryStrength = 3;
+    this.stomach.age = 17;
+//    this.carryStrength = 3;
 };
 _.extend(Player.prototype, {
     getGameObject: function() {
@@ -131,7 +159,6 @@ _.extend(Player.prototype, {
     update: function() {
         if (this.stomach.dead) return;
 
-
         world.game.physics.arcade.collide(this.sprite, world.layers.tiles);
 
         this.sprite.body.velocity.x = 0;
@@ -154,6 +181,44 @@ _.extend(Player.prototype, {
 
         var nearbyAnimals = this.nearbyAnimals();
         var nearbyTree = this.nearbyTree();
+        var nearbyMan = this.nearbyMan();
+
+        // tutorial stuff
+        if (nearbyTree && !Settings.getBool("tutorial:tree") && !this.treeHint) {
+            this.treeHint = Hints.objectCaption(nearbyTree.group, "z - eat");
+        }
+        if (!nearbyTree && this.treeHint) {
+            this.treeHint.cancel();
+            this.treeHint = undefined;
+        }
+        if (nearbyMan && !Settings.getBool("tutorial:man") && !this.manHint) {
+            this.manHint = Hints.objectCaption(nearbyMan.sprite, "x - fuck");
+        }
+        if (!nearbyMan && this.manHint) {
+            this.manHint.cancel();
+            this.manHint = undefined;
+        }
+
+        if (this.needsAPoo && !nearbyTree && !nearbyMan && !Settings.getBool("tutorial:poo")) {
+            Settings.setBool("tutorial:poo", true);
+            Hints.objectCaption(this.sprite, "down+z - shit", 1000);
+        }
+
+        if (nearbyTree && nearbyTree.thirsty && !Settings.getBool("tutorial:water") && !this.waterHint) {
+            this.waterHint = Hints.objectCaption(nearbyTree.group, "I need water");
+        }
+        if (!nearbyTree && this.waterHint) {
+            this.waterHint.cancel();
+            this.waterHint = undefined;
+        }
+
+        if (this.nearbyWater() && !Settings.getBool("tutorial:pickupWater") && !this.pickupWaterHint) {
+            this.pickupWaterHint = Hints.objectCaption(this.sprite, "down+z - get water");
+        }
+        if (this.pickupWaterHint && !this.nearbyWater()) {
+            this.pickupWaterHint.cancel();
+            this.pickupWaterHint = undefined;
+        }
 
         if (this.shooTimer > world.game.time.now) {
             return;
@@ -222,6 +287,11 @@ _.extend(Player.prototype, {
                     // water a tree
                     else if (nearbyTree && nearbyTree.thirsty && this.carrying === "water") {
                         nearbyTree.thirsty = false;
+                        Settings.setBool("tutorial:water", true);
+                        if (this.waterHint) {
+                            this.waterHint.cancel();
+                            this.waterHint = undefined;
+                        }
                         this.carrying = "";
                         this.actionButton1Timer = world.game.time.now + 1000;
                     }
@@ -247,6 +317,11 @@ _.extend(Player.prototype, {
                 }
                 // eat fruit
                 if (this.actionButton1Timer < world.game.time.now && nearbyTree && nearbyTree.fruit > 0 && this.stomach.eat(nearbyTree)) {
+                    Settings.setBool("tutorial:tree", true);
+                    if (this.treeHint) {
+                        this.treeHint.cancel();
+                        this.treeHint = undefined;
+                    }
                     this.needsAPoo = true;
                     this.actionButton1Timer = world.game.time.now + 1000;
                 }
@@ -268,28 +343,31 @@ _.extend(Player.prototype, {
             // having sex
             if (this.actionButton2.isDown && this.sprite.body.onFloor()) {
                 
-                // check if we are with a man
-                var withMan = undefined;
-                for (var m = 0 ; m < world.men.length ; m++) {
-                    if (this.sprite.overlap(world.men[m].sprite)) {
-                        withMan = world.men[m];
-                        break;
-                    }
-                }
-                if (withMan) {
+                if (nearbyMan) {
                     if (this.pregnant) {
-                        // some text about how you can't have sex
+                        if (!Settings.getBool("tutorial:pregnantSex")) {
+                            Settings.setBool("tutorial:pregnantSex", true);
+                            Hints.objectCaption(this.sprite, "No sex when pregnant!");
+                        }
                     } else if (!this.isAdult()) {
-                        // some text about how you can't have sex
+                        if (!Settings.getBool("tutorial:underAgeSex")) {
+                            Settings.setBool("tutorial:underAgeSex", true);
+                            Hints.objectCaption(this.sprite, "Only adults are allowed");
+                        }
                     } else {
+                        Settings.setBool("tutorial:man", true);
+                        if (this.manHint) {
+                            this.manHint.cancel();
+                            this.manHint = undefined;
+                        }
                         this.havingSex = true;
-                        withMan.havingSex = true;
+                        nearbyMan.havingSex = true;
                         this.sprite.animations.play("sex");
                         setTimeout((function() {
                             this.havingSex = false;
-                            withMan.havingSex = false;
+                            nearbyMan.havingSex = false;
                             this.pregnant = true;
-                            this.babyType = withMan.type;
+                            this.babyType = nearbyMan.type;
                         }).bind(this), this.sexDuration);
                     }
                 }
@@ -335,6 +413,11 @@ _.extend(Player.prototype, {
             } else {
                 // collecting water
                 if (this.isAdult() && this.actionButton1.isDown && !this.carrying && this.nearbyWater()) {
+                    if (this.pickupWaterHint) {
+                        Settings.setBool("tutorial:pickupWater", true);
+                        this.pickupWaterHint.cancel();
+                        this.pickupWaterHint = undefined;
+                    }
                     this.carrying = "water";
                     this.actionButton1Timer = world.game.time.now + 1000;
                 }
@@ -390,6 +473,14 @@ _.extend(Player.prototype, {
                 this.hungerBar.endFill();
             }
         }
+
+        // lock the player position when the tutorial is showing
+        if (this.tutorialShowing) {
+            this.sprite.body.velocity.x = 0;
+            this.sprite.body.velocity.y = 0;
+            this.sprite.animations.stop();
+            this.sprite.frame = 0;
+        }
     },
 
     isDead: function() {
@@ -431,6 +522,18 @@ _.extend(Player.prototype, {
             }
         }
         return animals;
+    },
+
+    nearbyMan: function() {
+        // check if we are with a man
+        var withMan = undefined;
+        for (var m = 0 ; m < world.men.length ; m++) {
+            if (this.sprite.overlap(world.men[m].sprite)) {
+                withMan = world.men[m];
+                break;
+            }
+        }
+        return withMan;
     },
 
     nearbyEmptySpace: function() {

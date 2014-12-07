@@ -20,6 +20,9 @@ _.extend(Game.prototype, {
 
         world.game.add.image(0, 0, 'background');
 
+        // captions
+        world.layers.captions = world.game.add.group(null, "captions");
+
         // tilemap
         world.map = world.game.add.tilemap('tilemap');
         world.map.addTilesetImage('tiles', 'tiles');
@@ -49,6 +52,10 @@ _.extend(Game.prototype, {
         this.maxGiraffeTime = 60000;
         this.minGiraffeTime = 10000;
         this.giraffeTimer = world.game.time.now + this.maxGiraffeTime;
+
+        // captions is on top
+        world.game.world.addChild(world.layers.captions);
+
     },
 
     updateCollection: function(collection, test) {

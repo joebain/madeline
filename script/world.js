@@ -3,6 +3,7 @@ var World = {
     layers: {
         tiles: null,
         trees: null,
+        captions: null
     },
     player: null,
     game: null,
@@ -20,6 +21,7 @@ var World = {
         body: "42px monaco",
         title: "120px PixelDart",
         hud: "42px monaco",
+        caption: "34px monaco"
     },
     tiles: {
         ground: 1,
@@ -35,6 +37,7 @@ World.reset = function() {
     World.map = null;
     World.layers.tiles = null;
     World.layers.trees = null;
+    World.layers.captions = null;
     World.player = null;
     World.trees = [];
     World.men = [];

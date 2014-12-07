@@ -19,11 +19,11 @@ TODO
  * Hyenas attack you and old people
 
  * High score
- * Captions above your head (e.g. 'eat fruit', 'pick up water')
- * Tutorial / introduction
 
  * Music
  * Sound effects
+
+ * Browser detect screen - turn away IE and mobile
 
 DOING
 =====
@@ -33,6 +33,8 @@ DOING
 DONE
 ====
 
+ * Captions above your head (e.g. 'eat fruit', 'pick up water')
+ * Tutorial / introduction
  * Swim in water
  * Fences keep animals out
  * Giraffes come and eat fruit
