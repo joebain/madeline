@@ -1,21 +1,24 @@
+BUGS
+====
+
+ * old women drop into the ground rather than disappearing
+ * poop can be placed where a tree already is
+ * placing a fence doesn't work
+ * placing a tombstone doesn't work
+
 TODO
 ====
 
  * Bury bones
- * Carry tree
- * Shit
- * Water tree and it grows
  * Swim in water
  * Give birth manually
- * Fix jumping
 
  * Giraffes come and eat fruit
  * Hyenas are attracted by corpses
  * Hyenas attack you and old people
 
- * Game over / retry screen
  * High score
- * Captions
+ * Captions above your head (e.g. 'eat fruit', 'pick up water')
  * Tutorial / introduction
 
  * Music
@@ -23,8 +26,14 @@ TODO
 
 DOING
 =====
+ * Carry tree and place a fence
 
- * Player can die
 
 DONE
 ====
+
+ * Game over / retry screen
+ * Player can die
+ * Fix jumping
+ * Shit
+ * Water tree and it grows

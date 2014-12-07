@@ -1,5 +1,7 @@
 var world = require("./world");
 
+var Util = require("./util");
+
 var Player = require("./player");
 var Tree = require("./tree");
 var Man = require("./man");
@@ -10,6 +12,8 @@ var Game = function(game) {
 
 _.extend(Game.prototype, {
     create: function() {
+        world.reset();
+
         world.game.stage.backgroundColor = "#ffffff";
         world.game.physics.startSystem(Phaser.Physics.ARCADE);
 
@@ -29,9 +33,7 @@ _.extend(Game.prototype, {
         for (var o = 0 ; o < world.map.objects.trees.length ; o++) {
             var object = world.map.objects.trees[o];
             var tree = new Tree(object.x, object.y);
-            world.trees.push(tree);
-            world.layers.trees.add(tree.group);
-            tree.age = 4;
+            tree.age = 3 + Math.random();
         }
 
         // player
@@ -53,6 +55,10 @@ _.extend(Game.prototype, {
 
         for (var t = 0 ; t < world.trees.length ; t++) {
             world.trees[t].update();
+            if (world.trees[t].dead) {
+                world.trees.splice(t, 1);
+                t--
+            }
         }
         for (var m = 0 ; m < world.men.length ; m++) {
             world.men[m].update();

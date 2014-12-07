@@ -6,6 +6,7 @@ _.extend(Preloader.prototype, {
     preload: function() {
         world.game.load.spritesheet('player', 'img/player.png', 32, 32);
         world.game.load.spritesheet('belly', 'img/belly.png', 32, 32);
+        world.game.load.spritesheet('carry', 'img/carry.png', 32, 32);
         world.game.load.image('background', 'img/background.png');
         world.game.load.tilemap('tilemap', 'maps/level1.json', null, Phaser.Tilemap.TILED_JSON);
         world.game.load.image('tiles', 'img/tilemap.png');

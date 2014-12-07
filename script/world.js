@@ -12,13 +12,21 @@ var World = {
     stomachs: [],
     rates: {
         ageRate: 15 / (30), // 30 secs is 15 years
-        feedRate: 20, // got to eat once a minute
+        feedRate: 60, // got to eat once a minute
         pregnancyRate: 1 / 4 // 7 seconds is one month (63 secs for full pregnancy)
     },
     fonts: {
         body: "42px monaco",
         title: "120px PixelDart",
         hud: "42px monaco",
+    },
+    tiles: {
+        ground: 1,
+        corpse: 3,
+        tombstone: 4,
+        water: 6,
+        tree: 8,
+        fence: 7
     }
 };
 
@@ -27,7 +35,6 @@ World.reset = function() {
     World.layers.tiles = null;
     World.layers.trees = null;
     World.player = null;
-    World.game = null;
     World.trees = [];
     World.men = [];
     World.dependants = [];

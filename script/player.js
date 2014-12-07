@@ -1,6 +1,8 @@
 var world = require("./world");
+var Util = require("./util");
 
 var Stomach = require("./stomach");
+var Tree = require("./tree");
 
 var Player = function(x, y) {
     this.sprite = new Phaser.Sprite(world.game, x, y, 'player');
@@ -25,8 +27,13 @@ var Player = function(x, y) {
 
     this.bellySprite = new Phaser.Sprite(world.game, -16, -32, 'belly');
     this.bellySprite.frame = 0;
+
+    this.carrySprite = new Phaser.Sprite(world.game, -16, -64, 'carry');
+    this.carrySpriteFrames = {"water": 1, "wood": 2, "bones": 3};
+    this.carrySprite.frame = 0;
     
     this.sprite.addChild(this.bellySprite);
+    this.sprite.addChild(this.carrySprite);
     this.sprite.anchor.setTo(.5, 1); //so it flips around its middle
 
     world.game.physics.enable(this.sprite, Phaser.Physics.ARCADE);
@@ -38,33 +45,45 @@ var Player = function(x, y) {
 
 
     this.cursors = world.game.input.keyboard.createCursorKeys();
+    this.actionButton1 = world.game.input.keyboard.addKey(Phaser.Keyboard.Z);
+    this.actionButton2 = world.game.input.keyboard.addKey(Phaser.Keyboard.X);
+    this.actionButton1Timer = 0;
+    this.actionButton2Timer = 0;
     this.upKeyTimer = 0;
 
     // speeds &c
-    this.jumpSpeed = 300;
-    this.jumpSpeedIncrements = 120;
+    this.jumpSpeed = 400;
+    this.jumpDuration = 100;
+    this.jumpDurationIncrements = 100;
+    this.jumpTimer = 0;
 
     // status variables
     this.jumpStrength = 1; // up to 3
     this.carryStrength = 1; // up to 3
     this.heartStrength = 1; // up to 3
 
+    this.generations = 0;
+
     this.rejuvinate();
 
     // hud
     this.hud = world.game.add.group();
-    this.heartBar = new Phaser.TileSprite(world.game, 10, 10, 0, 16, "heart");
-    this.hud.add(this.heartBar);
-    this.ageText = new Phaser.Text(world.game, 10, 30, "", {font: world.fonts.hud, fill: "#ffffff"});
+    this.ageText = new Phaser.Text(world.game, 10, 10, "", {font: world.fonts.hud, fill: "#ffffff"});
     this.hud.add(this.ageText);
+    this.heartBar = new Phaser.TileSprite(world.game, 10, 40, 0, 16, "heart");
+    this.hud.add(this.heartBar);
     this.hungerBar = world.game.add.graphics(10, 65);
     this.hungerBarMaxWidth = 140;
     this.hungerBarHeight = 15;
+    this.generationsText = new Phaser.Text(world.game, 0, 10, "", {font: world.fonts.hud, fill: "#ffffff"});
+    this.hud.add(this.generationsText);
 
 
     // testing
 //    this.pregnant = true;
 //    this.pregnancyMonths = 8;
+//    this.carrying = "water";
+    this.stomach.age = 17;
 };
 _.extend(Player.prototype, {
     getGameObject: function() {
@@ -90,6 +109,12 @@ _.extend(Player.prototype, {
 
         this.pregnancyMonths = 0;
         this.pregnant = false;
+
+        this.carrying = "";
+        this.needsAPoo = false;
+        this.crouching = false;
+
+        this.generations ++;
     },
 
     isAdult: function() {
@@ -103,6 +128,9 @@ _.extend(Player.prototype, {
         world.game.physics.arcade.collide(this.sprite, world.layers.tiles);
 
         this.sprite.body.velocity.x = 0;
+        if (this.sprite.body.velocity.y < 0) {
+            this.sprite.body.velocity.y *= 0.9;
+        }
 
         var howPregnant = Math.ceil(Math.min(this.pregnancyMonths, 9)/3);
         this.bellySprite.frame = howPregnant;
@@ -137,25 +165,55 @@ _.extend(Player.prototype, {
                     this.sprite.animations.frame = 0;
                 }
             }
-            if (this.cursors.up.isDown && world.game.time.now > this.upKeyTimer) {
-                // check if we are under a tree
-                var underTree = undefined;
-                for (var t = 0 ; t < world.trees.length ; t++) {
-                    if (this.sprite.overlap(world.trees[t].sprite)) {
-                        underTree = world.trees[t];
-                        break;
+
+            if (this.actionButton1.isDown && world.game.time.now > this.actionButton1Timer) {
+                if (this.carrying === "wood" && this.nearbyCorpse()) {
+                    var corpse = this.nearbyCorpse();
+                    world.map.putTile(world.tiles.tombstone, corpse.x, corpse.y, "ground");
+                    this.carrying = "";
+                }
+                // fences
+                else if (this.carrying === "wood" && this.nearbyEmptySpace()) {
+                    var space = this.nearbyEmptySpace();
+                    world.map.putTile(world.tiles.fence, space.x, space.y, "ground");
+                    this.carrying = "";
+                } else if (this.nearbyTree()) {
+                    var tree = this.nearbyTree();
+                    // water the tree
+                    if (tree.thirsty && this.carrying === "water") {
+                        tree.thirsty = false;
+                        this.carrying = "";
+                        this.actionButton1Timer = world.game.time.now + 1000;
+                    }
+                    // pick up wood
+                    else if (tree.isDeadWood() && this.carrying === "" && this.carryStrength >= 3) {
+                        tree.kill();
+                        this.carrying = "wood";
+                        this.actionButton1Timer = world.game.time.now + 1000;
+                    }
+                    // eat fruit
+                    else if (this.stomach.eat(tree)) {
+                        this.needsAPoo = true;
+                        this.actionButton1Timer = world.game.time.now + 1000;
                     }
                 }
-                if (underTree && this.stomach.eat(underTree)) {
-                    this.upKeyTimer = world.game.time.now + 1000;
-                }
-                // or else we can jump
-                else if (this.sprite.body.onFloor()) {
-                    this.sprite.body.velocity.y = -(this.jumpSpeed+this.jumpStrength*this.jumpSpeedIncrements) * (1-howPregnant/4);
-                    this.upKeyTimer = world.game.time.now + 1000;
+            }
+
+
+            // jumping
+            if (this.canJump && this.cursors.up.isDown && this.sprite.body.onFloor()) {
+                this.jumping = true;
+                this.jumpTimer = world.game.time.now + (this.jumpDuration+this.jumpStrength*this.jumpDurationIncrements) * (1-howPregnant/4)
+            }
+            if (this.jumping) {
+                this.sprite.body.velocity.y = -this.jumpSpeed;
+                if (!this.cursors.up.isDown || world.game.time.now > this.jumpTimer) {
+                    this.jumping = false;
                 }
             }
-            else if (this.cursors.down.isDown && this.sprite.body.onFloor()) {
+
+            // having sex
+            if (this.actionButton2.isDown && this.sprite.body.onFloor()) {
                 
                 // check if we are with a man
                 var withMan = undefined;
@@ -181,12 +239,13 @@ _.extend(Player.prototype, {
                             this.babyType = withMan.type;
                         }).bind(this), this.sexDuration);
                     }
-                } else {
-                    this.crouching = true;
-                    if (this.isAdult()) {
-                        this.sprite.animations.play("crouch-down");
-                    }
                 }
+            }
+
+            // crouching
+            if (this.cursors.down.isDown && this.isAdult()) {
+                this.crouching = true;
+                this.sprite.animations.play("crouch-down");
             }
 
             if (!this.sprite.body.onFloor()) {
@@ -197,25 +256,50 @@ _.extend(Player.prototype, {
                     this.sprite.frame = 7;
                 }
                 this.onFloor = false;
+                this.canJump = false;
             } else {
                 if (!this.onFloor) {
-                    this.crouching = true;
                     if (this.isAdult()) {
+                        this.crouching = true;
                         this.sprite.animations.play("land");
+                        setTimeout((function() {
+                            this.crouching = false;
+                        }).bind(this), this.landingDuration);
                     }
-                    setTimeout((function() {
-                        this.crouching = false;
-                    }).bind(this), this.landingDuration);
                 }
                 this.onFloor = true;
+                if (!this.cursors.up.isDown) {
+                    this.canJump = true;
+                }
             }
         } else {
+            // stand up
             if (!this.cursors.down.isDown) {
                 if (this.isAdult()) {
                     this.sprite.animations.play("stand-up");
+                    setTimeout((function() { this.crouching = false; }).bind(this), this.crouchDuration);
                 }
-                setTimeout((function() { this.crouching = false; }).bind(this), this.crouchDuration);
+            } else {
+                // collecting water
+                if (this.isAdult() && this.actionButton1.isDown && !this.carrying && this.nearbyWater()) {
+                    this.carrying = "water";
+                    this.actionButton1Timer = world.game.time.now + 1000;
+                }
+                // shitting
+                else if (this.actionButton1.isDown && this.needsAPoo && this.nearbyEmptySpace()) {
+                    var space = this.nearbyEmptySpace();
+                    var tree = new Tree(space.x*32, (space.y+1)*32);
+                    this.needsAPoo = false;
+                    this.actionButton1Timer = world.game.time.now + 1000;
+                }
             }
+        }
+
+        // update carrying things
+        if (this.carrying === "") {
+            this.carrySprite.frame = 0;
+        } else {
+            this.carrySprite.frame = this.carrySpriteFrames[this.carrying];
         }
 
         // update the stats and timers
@@ -229,6 +313,13 @@ _.extend(Player.prototype, {
 
         var age = Math.ceil(this.stomach.age);
         this.ageText.text = age + " year" + (age>1?"s":"") + " old";
+
+        var text = "Generation " + this.generations;
+        if (this.generationsText.text !== text || this.generationsText.x === 0) {
+            this.generationsText.text = text;
+            this.generationsText.updateTransform();
+            this.generationsText.x = (world.game.width-10) - this.generationsText.width;
+        }
 
         var hungerPercent = this.stomach.getHungerPercent();
         var hungerBarWidth = Math.ceil(this.hungerBarMaxWidth*hungerPercent);
@@ -249,6 +340,56 @@ _.extend(Player.prototype, {
 
     isDead: function() {
         return this.stomach.dead;
+    },
+
+
+    getTilePos: function() {
+        return Util.worldToTilePos(this.sprite);
+    },
+    getTile: function() {
+        var tPos = this.getTilePos();
+        var mapTile = world.map.getTile(tPos.x, tPos.y);
+        return mapTile;
+    },
+
+    nearbyTree: function() {
+        var tile = this.getTile();
+        if (tile && tile.index === world.tiles.tree) {
+            return tile.tree;
+        }
+        return undefined;
+    },
+
+    nearbyCorpse: function() {
+        var nearbyCorpse = undefined;
+        var mapTile = this.getTile();;
+        if (mapTile && mapTile.index === world.tiles.corpse) {
+            nearbyCorpse = tPos;
+        }
+        return nearbyCorpse;
+    },
+
+    nearbyEmptySpace: function() {
+        var nearbyEmptySpace = undefined;
+        var tPos = this.getTilePos();
+        // check there is no tree, bones or anything else there
+        if (!world.map.hasTile(tPos.x, tPos.y)) {
+            nearbyEmptySpace = tPos;
+        }
+        return nearbyEmptySpace;
+    },
+
+    nearbyWater: function() {
+        var tPos = this.getTilePos();
+        var left = world.map.getTile(tPos.x-1, tPos.y+1);
+        var right = world.map.getTile(tPos.x+1, tPos.y+1);
+        if (left && left.index === world.tiles.water) {
+            return left;
+        }
+        if (right && right.index === world.tiles.water) {
+            return right;
+        }
+        return undefined;
     }
 });
 
