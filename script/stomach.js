@@ -1,13 +1,15 @@
 var world = require("./world");
 
-var Stomach = function(body, health, age) {
+var Stomach = function(body, health, age, foodRate) {
     this.body = body;
 
     this.health = health; // 1-3
     this.age = age;
 
-    this.foodClock = world.rates.feedRate;
+    this.foodRate = foodRate || world.rates.feedRate;
+    this.foodClock = this.foodRate;
     this.dead = false;
+    this.imortal = false;
 
     world.stomachs.push(this);
 };
@@ -20,10 +22,12 @@ _.extend(Stomach.prototype, {
         this.foodClock -= world.game.time.physicsElapsed;
 
         if (this.foodClock < 0) {
-            this.health--;
-            this.foodClock = world.rates.feedRate;
+            if (!this.imortal) {
+                this.health--;
+                this.foodClock = this.foodRate;
+            }
         }
-        if (this.age > 100 || this.health <= 0) {
+        if (!this.imortal && (this.age > 100 || this.health <= 0)) {
             this.dead = true;
         }
     },
@@ -31,7 +35,7 @@ _.extend(Stomach.prototype, {
     eat: function(tree) {
         if (tree.fruit > 0) {
             tree.fruit--;
-            this.foodClock = world.rates.feedRate;
+            this.foodClock = this.foodRate;
             return true;
         }
         return false;
@@ -39,7 +43,7 @@ _.extend(Stomach.prototype, {
 
 
     getHungerPercent: function() {
-        return this.foodClock/world.rates.feedRate;
+        return this.foodClock/this.foodRate;
     }
 });
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" orientation="orthogonal" renderorder="right-down" width="25" height="20" tilewidth="32" tileheight="32" nextobjectid="16">
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="25" height="20" tilewidth="32" tileheight="32" nextobjectid="29">
  <tileset firstgid="1" name="tiles" tilewidth="32" tileheight="32">
   <image source="img/tilemap.png" width="128" height="64"/>
  </tileset>
@@ -7,28 +7,36 @@
   <image source="img/tree.png" width="192" height="64"/>
  </tileset>
  <tileset firstgid="15" name="player" tilewidth="32" tileheight="32">
-  <image source="img/player.png" width="544" height="32"/>
+  <image source="img/player.png" width="608" height="32"/>
  </tileset>
- <tileset firstgid="32" name="man" tilewidth="32" tileheight="32">
+ <tileset firstgid="34" name="man" tilewidth="32" tileheight="32">
   <image source="img/man.png" width="384" height="48"/>
+ </tileset>
+ <tileset firstgid="46" name="giraffe" tilewidth="32" tileheight="64">
+  <image source="img/giraffe.png" width="128" height="64"/>
  </tileset>
  <layer name="ground" width="25" height="20">
   <data encoding="base64" compression="zlib">
-   eJxjYBgF2AAjATzQ7hkF5IHBEJcDAfD5eziHB/sIsINaZdRIzRukAmY0PrHxT6hOIYTZiMAA6MwAiw==
+   eJxjYBgFQwEwomFy9ZFrznABIzUMCKWDkRYeowATkJJGRtMK6YCc8EXGbERgALAQAHA=
   </data>
  </layer>
  <objectgroup name="trees">
   <object id="7" gid="12" x="64" y="608"/>
-  <object id="8" gid="12" x="480" y="224"/>
+  <object id="25" gid="13" x="224" y="320"/>
  </objectgroup>
  <objectgroup name="player">
   <object id="9" gid="15" x="256" y="608"/>
  </objectgroup>
  <objectgroup name="manPoints">
-  <object id="10" gid="32" x="128" y="608"/>
-  <object id="11" gid="32" x="704" y="448"/>
-  <object id="12" gid="32" x="64" y="320"/>
-  <object id="13" gid="32" x="704" y="64"/>
-  <object id="14" gid="32" x="32" y="96"/>
+  <object id="10" gid="34" x="128" y="608"/>
+  <object id="11" gid="34" x="704" y="480"/>
+  <object id="12" gid="34" x="64" y="320"/>
+  <object id="22" gid="34" x="704" y="128"/>
+  <object id="23" gid="34" x="32" y="160"/>
+ </objectgroup>
+ <objectgroup name="animalPoints">
+  <object id="17" gid="46" x="768" y="480"/>
+  <object id="19" gid="46" x="0" y="608"/>
+  <object id="21" gid="46" x="0" y="320"/>
  </objectgroup>
 </map>

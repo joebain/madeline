@@ -10,6 +10,7 @@ var World = {
     men: [],
     dependants: [],
     stomachs: [],
+    animals: [],
     rates: {
         ageRate: 15 / (30), // 30 secs is 15 years
         feedRate: 60, // got to eat once a minute
@@ -22,11 +23,11 @@ var World = {
     },
     tiles: {
         ground: 1,
-        corpse: 3,
-        tombstone: 4,
+        corpse: 7,
+        tombstone: 8,
         water: 6,
-        tree: 8,
-        fence: 7
+        tree: 4,
+        fence: 3
     }
 };
 
@@ -39,6 +40,7 @@ World.reset = function() {
     World.men = [];
     World.dependants = [];
     World.stomachs = [];
+    World.animals = [];
 };
 
 module.exports = World;

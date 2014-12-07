@@ -6,6 +6,7 @@ var Player = require("./player");
 var Tree = require("./tree");
 var Man = require("./man");
 var OldWoman = require("./old-woman");
+var Giraffe = require("./giraffe");
 
 var Game = function(game) {
 };
@@ -25,7 +26,7 @@ _.extend(Game.prototype, {
         world.layers.tiles = world.map.createLayer('ground');
         world.layers.tiles.resizeWorld();
 
-        world.map.setCollisionBetween(1, 2);
+        world.map.setCollisionBetween(1, 3);
 
         // trees
         world.layers.trees = world.game.add.group(world.game.world, "trees");
@@ -42,7 +43,22 @@ _.extend(Game.prototype, {
 
         // man
         this.manInterval = 10000;
-        this.manTimer = world.game.time.now;// + this.manInterval;
+        this.manTimer = world.game.time.now + this.manInterval;
+
+        // giraffe
+        this.maxGiraffeTime = 60000;
+        this.minGiraffeTime = 10000;
+        this.giraffeTimer = world.game.time.now + this.maxGiraffeTime;
+    },
+
+    updateCollection: function(collection, test) {
+        for (var i = 0 ; i < collection.length ; i++) {
+            collection[i].update();
+            if ((test && test(collection[i])) || collection[i].dead) {
+                collection.splice(i, 1);
+                i--
+            }
+        }
     },
 
     update: function() {
@@ -53,27 +69,10 @@ _.extend(Game.prototype, {
             world.game.state.start("game-over", false);
         }
 
-        for (var t = 0 ; t < world.trees.length ; t++) {
-            world.trees[t].update();
-            if (world.trees[t].dead) {
-                world.trees.splice(t, 1);
-                t--
-            }
-        }
-        for (var m = 0 ; m < world.men.length ; m++) {
-            world.men[m].update();
-            if (world.men[m].dead) {
-                world.men.splice(m, 1);
-                m--
-            }
-        }
-        for (var d = 0 ; d < world.dependants.length ; d++) {
-            world.dependants[d].update();
-            if (world.dependants[d].idDead && world.dependants[d].idDead()) {
-                world.dependants.splice(d, 1);
-                d--
-            }
-        }
+        this.updateCollection(world.trees);
+        this.updateCollection(world.animals);
+        this.updateCollection(world.men);
+        this.updateCollection(world.dependants, function(d) { return d.isDead && d.isDead(); });
 
         // process stomachs (turn people into bones)
         for (var s = 0 ; s < world.stomachs.length ; s++) {
@@ -85,10 +84,10 @@ _.extend(Game.prototype, {
                 var y = Math.ceil(stomach.body.sprite.y/32)-1;
                 while (x + dx < world.map.width && x - dx > 0) {
                     if (!world.map.hasTile(x-dx, y)) {
-                        world.map.putTile(3, x-dx, y, "ground");
+                        world.map.putTile(world.tiles.corpse, x-dx, y, "ground");
                         break;
                     } else if (!world.map.hasTile(x+dx, y)) {
-                        world.map.putTile(3, x-dx, y, "ground");
+                        world.map.putTile(world.tiles.corpse, x-dx, y, "ground");
                         break;
                     }
                     dx++;
@@ -110,8 +109,26 @@ _.extend(Game.prototype, {
             world.men.push(man);
             var manPoints = _.without(world.map.objects.manPoints, world.manPoint);
             world.manPoint = manPoints[Math.floor(manPoints.length * Math.random())];
-            world.manPoint = world.map.objects.manPoints[0];
+//            world.manPoint = world.map.objects.manPoints[0];
             man.sendTo(world.manPoint.x, world.manPoint.y);
+        }
+
+        // make giraffes
+        if (this.giraffeTimer < world.game.time.now && world.animals.length < 30) {
+            // reset the timer
+            this.giraffeTimer = this.maxGiraffeTime / world.trees.length;
+            if (this.giraffeTimer < this.minGiraffeTime) {
+                this.giraffeTime = this.minGiraffeTime;
+            }
+            this.giraffeTimer = world.game.time.now + this.giraffeTimer;
+
+            // make the giraffe
+            var entryPoint = world.map.objects.animalPoints[Math.floor(Math.random()*world.map.objects.animalPoints.length)];
+//            var entryPoint = world.map.objects.animalPoints[3];
+            var giraffe = new Giraffe();
+            world.game.world.add(giraffe.sprite);
+            world.animals.push(giraffe);
+            giraffe.sendTo(entryPoint.x, entryPoint.y);
         }
 
         // deliver the baby

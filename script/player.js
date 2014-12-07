@@ -23,6 +23,8 @@ var Player = function(x, y) {
     this.sprite.animations.add('stand-up', [8,0], 4, false);
     this.sprite.animations.add('sex', [10,11,12,11], 8, true);
 
+    this.sprite.animations.add('wave', [17,18], 4, true);
+
     this.sprite.animations.add('baby-run', [13,14,15,16], 8, true);
 
     this.bellySprite = new Phaser.Sprite(world.game, -16, -32, 'belly');
@@ -57,6 +59,8 @@ var Player = function(x, y) {
     this.jumpDurationIncrements = 100;
     this.jumpTimer = 0;
 
+    this.shooTimer = 0;
+
     // status variables
     this.jumpStrength = 1; // up to 3
     this.carryStrength = 1; // up to 3
@@ -72,6 +76,8 @@ var Player = function(x, y) {
     this.hud.add(this.ageText);
     this.heartBar = new Phaser.TileSprite(world.game, 10, 40, 0, 16, "heart");
     this.hud.add(this.heartBar);
+    this.strengthBar = new Phaser.TileSprite(world.game, 80, 40, 0, 16, "arm");
+    this.hud.add(this.strengthBar);
     this.hungerBar = world.game.add.graphics(10, 65);
     this.hungerBarMaxWidth = 140;
     this.hungerBarHeight = 15;
@@ -83,7 +89,8 @@ var Player = function(x, y) {
 //    this.pregnant = true;
 //    this.pregnancyMonths = 8;
 //    this.carrying = "water";
-    this.stomach.age = 17;
+//    this.stomach.age = 17;
+    this.carryStrength = 3;
 };
 _.extend(Player.prototype, {
     getGameObject: function() {
@@ -132,8 +139,25 @@ _.extend(Player.prototype, {
             this.sprite.body.velocity.y *= 0.9;
         }
 
+        var tile = this.getTile();
+        if (tile && tile.index === world.tiles.water && !this.jumping) {
+            var tPos = this.getTilePos();
+            this.sprite.y = Math.sin(world.game.time.now / (40*Math.PI))*8+tPos.y*32+16;
+            this.sprite.body.velocity.y = 0;
+            this.inWater = true;
+        } else {
+            this.inWater = false;
+        }
+
         var howPregnant = Math.ceil(Math.min(this.pregnancyMonths, 9)/3);
         this.bellySprite.frame = howPregnant;
+
+        var nearbyAnimals = this.nearbyAnimals();
+        var nearbyTree = this.nearbyTree();
+
+        if (this.shooTimer > world.game.time.now) {
+            return;
+        }
 
         if (this.havingSex) {
         } else if (!this.crouching) {
@@ -167,41 +191,70 @@ _.extend(Player.prototype, {
             }
 
             if (this.actionButton1.isDown && world.game.time.now > this.actionButton1Timer) {
-                if (this.carrying === "wood" && this.nearbyCorpse()) {
-                    var corpse = this.nearbyCorpse();
-                    world.map.putTile(world.tiles.tombstone, corpse.x, corpse.y, "ground");
-                    this.carrying = "";
-                }
-                // fences
-                else if (this.carrying === "wood" && this.nearbyEmptySpace()) {
-                    var space = this.nearbyEmptySpace();
-                    world.map.putTile(world.tiles.fence, space.x, space.y, "ground");
-                    this.carrying = "";
-                } else if (this.nearbyTree()) {
-                    var tree = this.nearbyTree();
-                    // water the tree
-                    if (tree.thirsty && this.carrying === "water") {
-                        tree.thirsty = false;
+                if (this.isAdult()) {
+                    // build a grave
+                    if (this.carrying === "wood" && this.nearbyCorpse()) {
+                        var corpse = this.nearbyCorpse();
+                        world.map.putTile(world.tiles.tombstone, corpse.x, corpse.y, "ground");
+                        this.carrying = "";
+                        this.actionButton1Timer = world.game.time.now + 1000;
+                    }
+                    // build fences
+                    else if (this.carrying === "wood" && this.nearbyEmptySpace()) {
+                        var space = this.nearbyEmptySpace();
+                        world.map.putTile(world.tiles.fence, space.x, space.y, "ground");
+                        this.sprite.y -= 32;
+                        this.carrying = "";
+                        this.actionButton1Timer = world.game.time.now + 1000;
+                    }
+                    // shoo animals
+                    else if (this.carrying === "" && nearbyAnimals.length && _.any(nearbyAnimals, function(a) {return a.name === "giraffe";})) {
+                        for (var a = 0 ; a < nearbyAnimals.length ; a++) {
+                            var animal = nearbyAnimals[a];
+                            if (animal.name === "giraffe") {
+                                animal.shoo(this.sprite);
+                            }
+                        }
+                        this.sprite.animations.play("wave");
+                        this.actionButton1Timer = world.game.time.now + 1000;
+                        this.shooTimer = world.game.time.now + 1000;
+                    }
+                    // water a tree
+                    else if (nearbyTree && nearbyTree.thirsty && this.carrying === "water") {
+                        nearbyTree.thirsty = false;
                         this.carrying = "";
                         this.actionButton1Timer = world.game.time.now + 1000;
                     }
                     // pick up wood
-                    else if (tree.isDeadWood() && this.carrying === "" && this.carryStrength >= 3) {
-                        tree.kill();
+                    else if (nearbyTree && nearbyTree.isDeadWood() && this.carrying === "" && this.carryStrength >= 3) {
+                        nearbyTree.kill();
                         this.carrying = "wood";
                         this.actionButton1Timer = world.game.time.now + 1000;
                     }
-                    // eat fruit
-                    else if (this.stomach.eat(tree)) {
-                        this.needsAPoo = true;
+                    // drop water
+                    else if (this.carrying === "water" && this.nearbyEmptySpace()) {
+                        this.carrying = "";
                         this.actionButton1Timer = world.game.time.now + 1000;
                     }
+                } else {
+                    // only babies can shit without crouching
+                    if (this.needsAPoo && this.nearbyEmptySpace()) {
+                        var space = this.nearbyEmptySpace();
+                        var tree = new Tree(space.x*32, (space.y+1)*32);
+                        this.needsAPoo = false;
+                        this.actionButton1Timer = world.game.time.now + 1000;
+                    }
+                }
+                // eat fruit
+                if (this.actionButton1Timer < world.game.time.now && nearbyTree && nearbyTree.fruit > 0 && this.stomach.eat(nearbyTree)) {
+                    this.needsAPoo = true;
+                    this.actionButton1Timer = world.game.time.now + 1000;
                 }
             }
 
 
             // jumping
-            if (this.canJump && this.cursors.up.isDown && this.sprite.body.onFloor()) {
+            if (this.canJump && this.cursors.up.isDown && (this.sprite.body.onFloor() || this.inWater)) {
                 this.jumping = true;
                 this.jumpTimer = world.game.time.now + (this.jumpDuration+this.jumpStrength*this.jumpDurationIncrements) * (1-howPregnant/4)
             }
@@ -248,16 +301,7 @@ _.extend(Player.prototype, {
                 this.sprite.animations.play("crouch-down");
             }
 
-            if (!this.sprite.body.onFloor()) {
-                this.sprite.animations.stop('run', true);
-                if (!this.isAdult()) {
-                    this.sprite.frame = 14;
-                } else {
-                    this.sprite.frame = 7;
-                }
-                this.onFloor = false;
-                this.canJump = false;
-            } else {
+            if (this.sprite.body.onFloor() || this.inWater) {
                 if (!this.onFloor) {
                     if (this.isAdult()) {
                         this.crouching = true;
@@ -271,6 +315,15 @@ _.extend(Player.prototype, {
                 if (!this.cursors.up.isDown) {
                     this.canJump = true;
                 }
+            } else {
+                this.sprite.animations.stop('run', true);
+                if (!this.isAdult()) {
+                    this.sprite.frame = 14;
+                } else {
+                    this.sprite.frame = 7;
+                }
+                this.onFloor = false;
+                this.canJump = false;
             }
         } else {
             // stand up
@@ -310,6 +363,7 @@ _.extend(Player.prototype, {
 
         // update the hud
         this.heartBar.width = this.stomach.health * 24;
+        this.strengthBar.width = this.carryStrength * 24;
 
         var age = Math.ceil(this.stomach.age);
         this.ageText.text = age + " year" + (age>1?"s":"") + " old";
@@ -367,6 +421,16 @@ _.extend(Player.prototype, {
             nearbyCorpse = tPos;
         }
         return nearbyCorpse;
+    },
+
+    nearbyAnimals: function() {
+        var animals = [];
+        for (var a = 0 ; a < world.animals.length ; a++) {
+            if (world.animals[a].sprite.overlap(this.sprite)) {
+                animals.push(world.animals[a]);
+            }
+        }
+        return animals;
     },
 
     nearbyEmptySpace: function() {
