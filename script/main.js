@@ -20,7 +20,7 @@ var create = function() {
     world.layers.tiles = world.map.createLayer('ground');
     world.layers.tiles.resizeWorld();
 
-    world.map.setCollisionBetween(1, 12);
+    world.map.setCollisionBetween(1, 2);
 
     // trees
     world.layers.trees = world.game.add.group(world.game.world, "trees");
@@ -60,7 +60,21 @@ var update = function() {
         world.dependants[d].update();
         if (world.dependants[d].dead) {
             var dependant = world.dependants[d];
-            world.map.putTile(3, Math.floor(dependant.sprite.x/32), Math.floor(dependant.sprite.y/32), "ground");
+            // find nearest tile for the bones
+
+            var x = Math.round(dependant.sprite.x/32);
+            var dx = 0;
+            var y = Math.ceil(dependant.sprite.y/32)-1;
+            while (x + dx < world.map.width && x - dx > 0) {
+                if (world.map.hasTile(x-dx, y)) {
+                    world.map.putTile(3, x-dx, y, "ground");
+                    break;
+                } else if (world.map.hasTile(x+dx, y)) {
+                    world.map.putTile(3, x-dx, y, "ground");
+                    break;
+                }
+                dx++;
+            }
             world.dependants.splice(d, 1);
             d--
         }

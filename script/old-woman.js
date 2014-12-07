@@ -17,7 +17,7 @@ var OldWoman = function(player) {
     this.age = player.age;
     this.health = 1;
     this.runSpeed = 4;
-    this.foodClock = world.rates.feedRate/3;
+    this.foodClock = 1;//world.rates.feedRate;
 
     this.mind = "";
     this.mindTimer = 0;
@@ -28,6 +28,10 @@ _.extend(OldWoman.prototype, {
     update: function() {
         if (this.dead) return;
 
+        if (this.foodClock < 0) {
+            this.health--;
+            this.foodClock = world.rates.feedRate;
+        }
         if (this.age > 100 || this.health <= 0) {
             this.dead = true;
             this.sprite.destroy();

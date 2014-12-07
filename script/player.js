@@ -19,6 +19,8 @@ var Player = function(x, y) {
     this.sprite.animations.add('stand-up', [8,0], 4, false);
     this.sprite.animations.add('sex', [10,11,12,11], 8, true);
 
+    this.sprite.animations.add('baby-run', [13,14,15,16], 8, true);
+
     this.bellySprite = new Phaser.Sprite(world.game, -16, -32, 'belly');
     this.bellySprite.frame = 0;
     
@@ -59,6 +61,8 @@ var Player = function(x, y) {
 
 
     // testing
+    this.pregnant = true;
+    this.pregnancyMonths = 8;
 };
 _.extend(Player.prototype, {
     getGameObject: function() {
@@ -100,17 +104,30 @@ _.extend(Player.prototype, {
             if (this.cursors.left.isDown)
             {
                 this.sprite.body.velocity.x = -this.runSpeed;
-                this.sprite.animations.play('run');
+                if (this.age < 16) {
+                    this.sprite.animations.play('baby-run');
+                } else {
+                    this.sprite.animations.play('run');
+                }
                 this.sprite.scale.x = -1;
             }
             else if (this.cursors.right.isDown)
             {
                 this.sprite.body.velocity.x = this.runSpeed;
-                this.sprite.animations.play('run');
+                if (this.age < 16) {
+                    this.sprite.animations.play('baby-run');
+                } else {
+                    this.sprite.animations.play('run');
+                }
                 this.sprite.scale.x = 1;
             }
             else {
-                this.sprite.animations.stop('run', true);
+                this.sprite.animations.stop();
+                if (this.age < 16) {
+                    this.sprite.animations.frame = 13;
+                } else {
+                    this.sprite.animations.frame = 0;
+                }
             }
             if (this.cursors.up.isDown && world.game.time.now > this.upKeyTimer) {
                 // check if we are under a tree
@@ -160,18 +177,26 @@ _.extend(Player.prototype, {
                     }
                 } else {
                     this.crouching = true;
-                    this.sprite.animations.play("crouch-down");
+                    if (this.age > 16) {
+                        this.sprite.animations.play("crouch-down");
+                    }
                 }
             }
 
             if (!this.sprite.body.onFloor()) {
                 this.sprite.animations.stop('run', true);
-                this.sprite.frame = 7;
+                if (this.age < 16) {
+                    this.sprite.frame = 14;
+                } else {
+                    this.sprite.frame = 7;
+                }
                 this.onFloor = false;
             } else {
                 if (!this.onFloor) {
                     this.crouching = true;
-                    this.sprite.animations.play("land");
+                    if (this.age > 16) {
+                        this.sprite.animations.play("land");
+                    }
                     setTimeout((function() {
                         this.crouching = false;
                     }).bind(this), this.landingDuration);
@@ -180,7 +205,9 @@ _.extend(Player.prototype, {
             }
         } else {
             if (!this.cursors.down.isDown) {
-                this.sprite.animations.play("stand-up");
+                if (this.age > 16) {
+                    this.sprite.animations.play("stand-up");
+                }
                 setTimeout((function() { this.crouching = false; }).bind(this), this.crouchDuration);
             }
         }
@@ -190,6 +217,10 @@ _.extend(Player.prototype, {
         this.foodClock -= world.game.time.physicsElapsed;
         if (this.pregnant) {
             this.pregnancyMonths += world.game.time.physicsElapsed * world.rates.pregnancyRate;
+        }
+        if (this.foodClock < 0) {
+            this.health--;
+            this.foodClock = world.rates.feedRate;
         }
 
         // update the hud
