@@ -9,9 +9,10 @@ var World = {
     trees: [],
     men: [],
     dependants: [],
+    stomachs: [],
     rates: {
         ageRate: 15 / (30), // 30 secs is 15 years
-        feedRate: 60, // got to eat once a minute
+        feedRate: 20, // got to eat once a minute
         pregnancyRate: 1 / 4 // 7 seconds is one month (63 secs for full pregnancy)
     }
 };
@@ -25,6 +26,7 @@ World.reset = function() {
     World.trees = [];
     World.men = [];
     World.dependants = [];
+    World.stomachs = [];
 };
 
 module.exports = World;

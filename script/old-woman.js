@@ -1,5 +1,7 @@
 var world = require("./world");
 
+var Stomach = require("./stomach");
+
 var OldWoman = function(player) {
     this.sprite = new Phaser.Sprite(world.game, player.getGameObject().x, player.getGameObject().y, 'old-woman');
 
@@ -14,10 +16,9 @@ var OldWoman = function(player) {
     this.sprite.body.maxVelocity.y = 500;
     this.sprite.body.setSize(8, 32);
 
-    this.age = player.age;
-    this.health = 1;
+    this.stomach = new Stomach(this, 1, player.age);
+
     this.runSpeed = 4;
-    this.foodClock = 1;//world.rates.feedRate;
 
     this.mind = "";
     this.mindTimer = 0;
@@ -26,22 +27,12 @@ var OldWoman = function(player) {
 
 _.extend(OldWoman.prototype, {
     update: function() {
-        if (this.dead) return;
+        this.stomach.update();
 
-        if (this.foodClock < 0) {
-            this.health--;
-            this.foodClock = world.rates.feedRate;
-        }
-        if (this.age > 100 || this.health <= 0) {
-            this.dead = true;
-            this.sprite.destroy();
-        } else {
+        if (!this.stomach.dead) {
             world.game.physics.arcade.collide(this.sprite, world.layers.tiles);
 
             this.sprite.body.velocity.x = 0;
-
-            this.age += world.game.time.physicsElapsed * world.rates.ageRate;
-            this.foodClock -= world.game.time.physicsElapsed;
 
             if (this.mind === "right")
             {
@@ -86,9 +77,9 @@ _.extend(OldWoman.prototype, {
                     this.sprite.frame = 0;
                 }
                 if (this.treeInMind && this.sprite.overlap(this.treeInMind.sprite)) {
-                    this.treeInMind.fruit--;
-                    this.foodClock = world.rates.feedRate;
-                    this.mind = "stand";
+                    if (this.stomach.eat(this.treeInMind)) {
+                        this.mind = "stand";
+                    }
                 }
             }
 
@@ -97,10 +88,14 @@ _.extend(OldWoman.prototype, {
                 this.mind = options[Math.floor(Math.random()*options.length)];
                 this.mindTimer = world.game.time.now + (Math.random() * 5) * 1000 + 5000;
             }
-            if (this.foodClock < 10) {
+            if (this.stomach.foodClock < 10) {
                 this.mind = "eat";
             }
         }
+    },
+
+    isDead: function() {
+        return this.stomach.dead;
     }
 });
 

@@ -1,5 +1,7 @@
 var world = require("./world");
 
+var Stomach = require("./stomach");
+
 var Player = function(x, y) {
     this.sprite = new Phaser.Sprite(world.game, x, y, 'player');
 
@@ -56,13 +58,13 @@ var Player = function(x, y) {
     this.ageText = new Phaser.Text(world.game, 10, 30, "", {font: "40px PixelDart", fill: "#ffffff"});
     this.hud.add(this.ageText);
     this.hungerBar = world.game.add.graphics(10, 65);
-    this.hungerBarWidth = 140;
+    this.hungerBarMaxWidth = 140;
     this.hungerBarHeight = 15;
 
 
     // testing
-    this.pregnant = true;
-    this.pregnancyMonths = 8;
+//    this.pregnant = true;
+//    this.pregnancyMonths = 8;
 };
 _.extend(Player.prototype, {
     getGameObject: function() {
@@ -84,14 +86,20 @@ _.extend(Player.prototype, {
             }
         }
 
-        this.health = this.heartStrength;
-        this.foodClock = world.rates.feedRate;
+        this.stomach = new Stomach(this, this.heartStrength, 0);
+
         this.pregnancyMonths = 0;
-        this.age = 0;
         this.pregnant = false;
     },
 
+    isAdult: function() {
+        return this.stomach.age >= 16;
+    },
+
     update: function() {
+        if (this.stomach.dead) return;
+
+
         world.game.physics.arcade.collide(this.sprite, world.layers.tiles);
 
         this.sprite.body.velocity.x = 0;
@@ -104,7 +112,7 @@ _.extend(Player.prototype, {
             if (this.cursors.left.isDown)
             {
                 this.sprite.body.velocity.x = -this.runSpeed;
-                if (this.age < 16) {
+                if (!this.isAdult()) {
                     this.sprite.animations.play('baby-run');
                 } else {
                     this.sprite.animations.play('run');
@@ -114,7 +122,7 @@ _.extend(Player.prototype, {
             else if (this.cursors.right.isDown)
             {
                 this.sprite.body.velocity.x = this.runSpeed;
-                if (this.age < 16) {
+                if (!this.isAdult()) {
                     this.sprite.animations.play('baby-run');
                 } else {
                     this.sprite.animations.play('run');
@@ -123,7 +131,7 @@ _.extend(Player.prototype, {
             }
             else {
                 this.sprite.animations.stop();
-                if (this.age < 16) {
+                if (!this.isAdult()) {
                     this.sprite.animations.frame = 13;
                 } else {
                     this.sprite.animations.frame = 0;
@@ -138,9 +146,7 @@ _.extend(Player.prototype, {
                         break;
                     }
                 }
-                if (underTree && underTree.fruit > 0) {
-                    underTree.fruit--;
-                    this.foodClock = world.rates.feedRate;
+                if (underTree && this.stomach.eat(underTree)) {
                     this.upKeyTimer = world.game.time.now + 1000;
                 }
                 // or else we can jump
@@ -162,7 +168,7 @@ _.extend(Player.prototype, {
                 if (withMan) {
                     if (this.pregnant) {
                         // some text about how you can't have sex
-                    } else if (this.age < 16) {
+                    } else if (!this.isAdult()) {
                         // some text about how you can't have sex
                     } else {
                         this.havingSex = true;
@@ -177,7 +183,7 @@ _.extend(Player.prototype, {
                     }
                 } else {
                     this.crouching = true;
-                    if (this.age > 16) {
+                    if (this.isAdult()) {
                         this.sprite.animations.play("crouch-down");
                     }
                 }
@@ -185,7 +191,7 @@ _.extend(Player.prototype, {
 
             if (!this.sprite.body.onFloor()) {
                 this.sprite.animations.stop('run', true);
-                if (this.age < 16) {
+                if (!this.isAdult()) {
                     this.sprite.frame = 14;
                 } else {
                     this.sprite.frame = 7;
@@ -194,7 +200,7 @@ _.extend(Player.prototype, {
             } else {
                 if (!this.onFloor) {
                     this.crouching = true;
-                    if (this.age > 16) {
+                    if (this.isAdult()) {
                         this.sprite.animations.play("land");
                     }
                     setTimeout((function() {
@@ -205,7 +211,7 @@ _.extend(Player.prototype, {
             }
         } else {
             if (!this.cursors.down.isDown) {
-                if (this.age > 16) {
+                if (this.isAdult()) {
                     this.sprite.animations.play("stand-up");
                 }
                 setTimeout((function() { this.crouching = false; }).bind(this), this.crouchDuration);
@@ -213,35 +219,36 @@ _.extend(Player.prototype, {
         }
 
         // update the stats and timers
-        this.age += world.game.time.physicsElapsed * world.rates.ageRate;
-        this.foodClock -= world.game.time.physicsElapsed;
         if (this.pregnant) {
             this.pregnancyMonths += world.game.time.physicsElapsed * world.rates.pregnancyRate;
         }
-        if (this.foodClock < 0) {
-            this.health--;
-            this.foodClock = world.rates.feedRate;
-        }
+        this.stomach.update();
 
         // update the hud
-        this.heartBar.width = this.health * 24;
+        this.heartBar.width = this.stomach.health * 24;
 
-        var age = Math.ceil(this.age);
+        var age = Math.ceil(this.stomach.age);
         this.ageText.text = age + " year" + (age>1?"s":"") + " old";
 
-        var hungerPercent = Math.ceil(this.hungerBarWidth*(this.foodClock/world.rates.feedRate));
-        if (hungerPercent < 0) hungerPercent = 0;
-        if (hungerPercent !== this.hungerPercent) {
-            this.hungerPercent = hungerPercent;
+        var hungerPercent = this.stomach.getHungerPercent();
+        var hungerBarWidth = Math.ceil(this.hungerBarMaxWidth*hungerPercent);
+        if (hungerBarWidth < 0) hungerBarWidth = 0;
+        if (hungerBarWidth !== this.hungerBarWidth) {
+            this.hungerBarWidth = hungerBarWidth;
             this.hungerBar.clear();
-            if (this.foodClock > 10 || (world.game.time.totalElapsedSeconds() % 0.5) < 0.4) {
+            // draw if we are full or flash when we are hungry
+            if (hungerPercent > 0.1 || (world.game.time.totalElapsedSeconds() % 0.5) < 0.3) {
                 this.hungerBar.lineStyle(2, 0xffffff, 1);
-                this.hungerBar.drawRect(0, 0, this.hungerBarWidth, this.hungerBarHeight);
+                this.hungerBar.drawRect(0, 0, this.hungerBarMaxWidth, this.hungerBarHeight);
                 this.hungerBar.beginFill(0xffffff);
-                this.hungerBar.drawRect(0, 0, this.hungerPercent, this.hungerBarHeight);
+                this.hungerBar.drawRect(0, 0, this.hungerBarWidth, this.hungerBarHeight);
                 this.hungerBar.endFill();
             }
         }
+    },
+
+    isDead: function() {
+        return this.stomach.dead;
     }
 });
 

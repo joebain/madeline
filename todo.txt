@@ -1,0 +1,30 @@
+TODO
+====
+
+ * Bury bones
+ * Carry tree
+ * Shit
+ * Water tree and it grows
+ * Swim in water
+ * Give birth manually
+ * Fix jumping
+
+ * Giraffes come and eat fruit
+ * Hyenas are attracted by corpses
+ * Hyenas attack you and old people
+
+ * Game over / retry screen
+ * High score
+ * Captions
+ * Tutorial / introduction
+
+ * Music
+ * Sound effects
+
+DOING
+=====
+
+ * Player can die
+
+DONE
+====
