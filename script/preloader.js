@@ -19,6 +19,25 @@ _.extend(Preloader.prototype, {
         world.game.load.spritesheet('play-button', 'img/play-button.png', 100, 48);
         world.game.load.spritesheet('retry-button', 'img/retry-button.png', 100, 48);
         world.game.load.spritesheet('giraffe', 'img/giraffe.png', 32, 64);
+
+        world.game.load.audio('theme', ['mzk/madeline.mp3', 'mzk/madeline.ogg']);
+        _.each([
+               'birth',
+               'death',
+               'shit',
+               'sex',
+               'game-over',
+               'life-lost',
+               'pickup',
+               'shit',
+               'high-munch',
+               'low-munch',
+               'munch',
+               'jump'
+        ], function(sound) {
+            world.game.load.audio(sound, ['mzk/'+sound+'.mp3', 'mzk/'+sound+'.ogg']);
+            world.sounds[sound] = world.game.add.audio(sound, 0.2); // sfx are load!
+        });
     },
 
     create: function() {

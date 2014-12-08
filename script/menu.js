@@ -7,7 +7,7 @@ _.extend(Menu.prototype, {
     create: function() {
         world.game.add.image(0, 0, 'background');
 
-        var text = world.game.add.text(world.game.width * 0.5, world.game.height * 0.15, "Matriline", {fill: "#ffffff", font: world.fonts.title});
+        var text = world.game.add.text(world.game.width * 0.5, world.game.height * 0.15, "Madeline's Daughters", {fill: "#ffffff", font: world.fonts.title});
         text.anchor.setTo(0.5, 0.5);
 
         var text = world.game.add.text(world.game.width * 0.5, world.game.height * 0.3, "", {fill: "#ffffff", font: world.fonts.body});
@@ -15,8 +15,8 @@ _.extend(Menu.prototype, {
             "You're all alone. Shipwrecked (or something) in this tiny little screen.",
             "If you want to survive you will need to work.",
             "Watch out for the local wildlife, and see if you can get any favours from the native inhabitants.",
-            "",
-            "Eat, shit, and have babies"
+            "Use the arrow keys to move around.",
+            "Eat, shit, and have babies."
         ].join("\n\n");
         text.align = "center";
         text.wordWrap = true;
@@ -33,6 +33,11 @@ _.extend(Menu.prototype, {
 
 
         this.continueButton = world.game.input.keyboard.addKey(Phaser.Keyboard.Z);
+
+        world.music = world.game.add.audio('theme', 1.0, true);
+        world.music.play();
+
+        world.game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
     },
 
     update: function() {

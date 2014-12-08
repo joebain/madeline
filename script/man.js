@@ -6,7 +6,7 @@ var Man = function(type) {
     this.type = type;
 
     this.walkDuration = 2000;
-    this.stayDuration = 5000;
+    this.stayDuration = 10000;
     this.showOffInterval = 2000;
 
     this.leaveTimer = 0;

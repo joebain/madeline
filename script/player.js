@@ -90,7 +90,7 @@ var Player = function(x, y) {
     if (!Settings.getBool("tutorial:hud")) {
         Settings.setBool("tutorial:hud", true);
         this.tutorialShowing = true;
-        Hints.caption("Welcome to the island.", 1000).then((function() {
+        Hints.caption("Hello Madeline, welcome to the island.", 1000).then((function() {
         Hints.caption("Let me help you.", 1000).then((function() {
         Hints.objectCaption(this.hungerBar, "You need to watch your hunger level.\nToo low and you will lose a life", 1000, null, "horizontal", {offsetX: this.hungerBarMaxWidth}).then((function() {
         Hints.objectCaption(this.heartBar, "These are your lives (you only have 1 now)", 1000, null, "horizontal").then((function() {
@@ -263,6 +263,7 @@ _.extend(Player.prototype, {
                         world.map.putTile(world.tiles.tombstone, corpse.x, corpse.y, "ground");
                         this.carrying = "";
                         this.actionButton1Timer = world.game.time.now + 1000;
+                        world.sounds.pickup.play();
                     }
                     // build fences
                     else if (this.carrying === "wood" && this.nearbyEmptySpace()) {
@@ -271,6 +272,7 @@ _.extend(Player.prototype, {
                         this.sprite.y -= 32;
                         this.carrying = "";
                         this.actionButton1Timer = world.game.time.now + 1000;
+                        world.sounds.pickup.play();
                     }
                     // shoo animals
                     else if (this.carrying === "" && nearbyAnimals.length && _.any(nearbyAnimals, function(a) {return a.name === "giraffe";})) {
@@ -283,6 +285,7 @@ _.extend(Player.prototype, {
                         this.sprite.animations.play("wave");
                         this.actionButton1Timer = world.game.time.now + 1000;
                         this.shooTimer = world.game.time.now + 1000;
+                        world.sounds['life-lost'].play();
                     }
                     // water a tree
                     else if (nearbyTree && nearbyTree.thirsty && this.carrying === "water") {
@@ -294,12 +297,14 @@ _.extend(Player.prototype, {
                         }
                         this.carrying = "";
                         this.actionButton1Timer = world.game.time.now + 1000;
+                        world.sounds.pickup.play();
                     }
                     // pick up wood
                     else if (nearbyTree && nearbyTree.isDeadWood() && this.carrying === "" && this.carryStrength >= 3) {
                         nearbyTree.kill();
                         this.carrying = "wood";
                         this.actionButton1Timer = world.game.time.now + 1000;
+                        world.sounds.pickup.play();
                     }
                     // drop water
                     else if (this.carrying === "water" && this.nearbyEmptySpace()) {
@@ -313,6 +318,7 @@ _.extend(Player.prototype, {
                         var tree = new Tree(space.x*32, (space.y+1)*32);
                         this.needsAPoo = false;
                         this.actionButton1Timer = world.game.time.now + 1000;
+                        world.sounds.shit.play();
                     }
                 }
                 // eat fruit
@@ -322,6 +328,7 @@ _.extend(Player.prototype, {
                         this.treeHint.cancel();
                         this.treeHint = undefined;
                     }
+                    world.sounds.munch.play();
                     this.needsAPoo = true;
                     this.actionButton1Timer = world.game.time.now + 1000;
                 }
@@ -332,6 +339,7 @@ _.extend(Player.prototype, {
             if (this.canJump && this.cursors.up.isDown && (this.sprite.body.onFloor() || this.inWater)) {
                 this.jumping = true;
                 this.jumpTimer = world.game.time.now + (this.jumpDuration+this.jumpStrength*this.jumpDurationIncrements) * (1-howPregnant/4)
+                world.sounds.jump.play();
             }
             if (this.jumping) {
                 this.sprite.body.velocity.y = -this.jumpSpeed;
@@ -363,6 +371,7 @@ _.extend(Player.prototype, {
                         this.havingSex = true;
                         nearbyMan.havingSex = true;
                         this.sprite.animations.play("sex");
+                        world.sounds.sex.play();
                         setTimeout((function() {
                             this.havingSex = false;
                             nearbyMan.havingSex = false;
@@ -420,6 +429,7 @@ _.extend(Player.prototype, {
                     }
                     this.carrying = "water";
                     this.actionButton1Timer = world.game.time.now + 1000;
+                    world.sounds.pickup.play();
                 }
                 // shitting
                 else if (this.actionButton1.isDown && this.needsAPoo && this.nearbyEmptySpace()) {
@@ -427,6 +437,7 @@ _.extend(Player.prototype, {
                     var tree = new Tree(space.x*32, (space.y+1)*32);
                     this.needsAPoo = false;
                     this.actionButton1Timer = world.game.time.now + 1000;
+                    world.sounds.shit.play();
                 }
             }
         }

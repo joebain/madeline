@@ -19,7 +19,7 @@ var World = {
     },
     fonts: {
         body: "42px monaco",
-        title: "120px PixelDart",
+        title: "100px PixelDart",
         hud: "42px monaco",
         caption: "34px monaco"
     },
@@ -30,7 +30,8 @@ var World = {
         water: 6,
         tree: 4,
         fence: 3
-    }
+    },
+    sounds: {}
 };
 
 World.reset = function() {

@@ -45,7 +45,7 @@ _.extend(Game.prototype, {
         world.game.world.add(world.player.getGameObject());
 
         // man
-        this.manInterval = 10000;
+        this.manInterval = 20000;
         this.manTimer = world.game.time.now + this.manInterval;
 
         // giraffe
@@ -72,6 +72,7 @@ _.extend(Game.prototype, {
         // update various things that need updating
         world.player.update();
         if (world.player.isDead()) {
+            world.sounds['game-over'].play();
             world.player.getGameObject().destroy();
             world.game.state.start("game-over", false);
         }
@@ -85,6 +86,7 @@ _.extend(Game.prototype, {
         for (var s = 0 ; s < world.stomachs.length ; s++) {
             var stomach = world.stomachs[s];
             if (stomach.dead) {
+                world.sounds.death.play();
                 // find nearest tile for the bones
                 var x = Math.round(stomach.body.sprite.x/32);
                 var dx = 0;
@@ -140,6 +142,7 @@ _.extend(Game.prototype, {
 
         // deliver the baby
         if (world.player.pregnant && world.player.pregnancyMonths > 9) {
+            world.sounds.birth.play();
             var oldWoman = new OldWoman(world.player);
             world.game.world.add(oldWoman.sprite);
             world.dependants.push(oldWoman);

@@ -34,6 +34,7 @@ _.extend(Stomach.prototype, {
 
     eat: function(tree) {
         if (tree.fruit > 0) {
+            world.sounds["high-munch"].play();
             tree.fruit--;
             this.foodClock = this.foodRate;
             return true;

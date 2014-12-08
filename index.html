@@ -27,6 +27,8 @@ body {
     padding: 0;
     background: black;
     font-family: "monaco", sans;
+    font-size: 24px;
+    color: white;
 }
 h1 {
     font-family: "PixelDart", sans;
@@ -49,10 +51,25 @@ footer {
     background: #80b1ff;
     margin: auto;
 }
+#controls {
+    width: 800px;
+    margin: auto;
+}
+#mute {
+    float: left;
+}
+#fullscreen {
+    float: right;
+    cursor: pointer;
+}
 </style>
 </head>
 <body>
-<h1><a href="http://joeba.in/matriline">Matriline</a></h1>
+<h1><a href="http://joeba.in/madeline">Madeline's Daughters</a></h1>
 <div id="game"></div>
-<footer>by <a href="http://joeba.in">Joe Bain</a> for <a href="http://ludumdare.com">Ludum Dare</a></footer>
+<div id="controls">
+    <input type="checkbox" id="mute"><label for="mute">mute</label>
+    <span id="fullscreen">fullscreen</span>
+</div>
+<footer>by <a href="http://joeba.in">Joe Bain</a> for <a href="http://ludumdare.com">Ludum Dare 31</a></footer>
 </body>
