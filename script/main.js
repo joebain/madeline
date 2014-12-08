@@ -29,4 +29,5 @@ window.onload = function() {
     fullscreen.addEventListener("click", function() {
         world.game.scale.startFullScreen();
     });
+
 };

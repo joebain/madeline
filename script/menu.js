@@ -38,6 +38,8 @@ _.extend(Menu.prototype, {
         world.music.play();
 
         world.game.scale.fullScreenScaleMode = Phaser.ScaleManager.EXACT_FIT;
+
+        document.querySelector("#loading").remove();
     },
 
     update: function() {
